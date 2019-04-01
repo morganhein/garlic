@@ -44,8 +44,16 @@ func getEvent(hdr procEventHdr, data []byte) (EventData, error) {
 	case ProcEventComm:
 		ev := Comm{}
 		ev.ProcessPid, ev.ProcessTgid = return2Uint32(data)
-		ev.Comm = string(data[8:bytes.IndexByte(data[8:], 0)])
-		//copy(ev.Comm[:], data[8:])
+		if len(data) < 8 {
+			//return error
+			return nil, fmt.Errorf("Data for ProcEventComm broken.")
+		}
+		index := bytes.IndexByte(data[8:], 0)
+		if index >= len(data) {
+			return nil, fmt.Errorf("Could not find the end of the data.\n")
+		}
+		fmt.Printf("Length of data: %v, Index: %v\n", len(data), index)
+		ev.Comm = string(data[8 : 8+index])
 		return ev, nil
 	case ProcEventCoredump:
 		ev := Coredump{}
